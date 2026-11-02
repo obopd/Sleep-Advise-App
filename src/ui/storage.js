@@ -3,7 +3,7 @@
 
 const KEY = 'sleep-advisor:v1';
 
-const EMPTY = () => ({ profile: {}, entries: [], measured: [] });
+const EMPTY = () => ({ profile: {}, entries: [], measured: [], lightLog: {} });
 
 export function load() {
   try {
@@ -43,5 +43,5 @@ export function exportJson(state) {
 export function importJson(text) {
   const data = JSON.parse(text);
   if (!data || !Array.isArray(data.entries)) throw new Error('Not a Sleep Advisor export file');
-  return { profile: data.profile || {}, entries: data.entries, measured: data.measured || [] };
+  return { profile: data.profile || {}, entries: data.entries, measured: data.measured || [], lightLog: data.lightLog || {} };
 }

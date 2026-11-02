@@ -113,8 +113,13 @@ export function personalAssociations(entries, minPerGroup = 3) {
       const b = metric(no, f);
       return a == null || b == null ? null : a - b;
     };
+    // Confounding check: if the habit mostly happens on free days (or mostly on workdays),
+    // differences may reflect the day type (e.g. sleeping in), not the habit.
+    const freeShare = (g) => g.filter((e) => e.night.freeDay).length / g.length;
+    const confoundedByFreeDays = Math.abs(freeShare(yes) - freeShare(no)) >= 0.5;
     out.push({
       habit: key,
+      confoundedByFreeDays,
       label: HABIT_LABELS[key],
       nWith: yes.length,
       nWithout: no.length,

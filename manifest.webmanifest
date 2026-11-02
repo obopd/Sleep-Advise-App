@@ -1,0 +1,11 @@
+{
+  "name": "Sleep Advisor",
+  "short_name": "Sleep",
+  "description": "Research-based sleep schedule and habits from your body clock.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#121211",
+  "theme_color": "#184f95",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

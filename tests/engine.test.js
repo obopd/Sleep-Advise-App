@@ -95,7 +95,7 @@ test('hormone curves have physiologically placed peaks', () => {
   assert.ok(corPeak >= h('07:20') && corPeak <= h('07:50'), `cortisol peak ${fmtClock(corPeak)}`);
   assert.ok(melatoninAt(h('14:00'), dlmo) < 0.05);
   // circadian alerting peaks in WMZ, troughs at CBTmin
-  assert.ok(circadianAlertingAt(h('20:00'), dlmo) > 0.99);
+  assert.ok(circadianAlertingAt(h('19:30'), dlmo) > 0.99);
   assert.ok(circadianAlertingAt(h('04:00'), dlmo) < 0.01);
 });
 
@@ -149,6 +149,11 @@ test('personal associations compare nights with vs without a habit', () => {
   const a = personalAssociations(entries).find((x) => x.habit === 'lateCaffeine');
   assert.ok(a);
   assert.equal(a.deltaLatency, 35);
+  assert.equal(a.confoundedByFreeDays, false);
+  const conf = personalAssociations(diary(14, { extra: (i) => ({ alcoholDrinks: i % 7 >= 5 ? 2 : 0 }) })).find((x) => x.habit === 'lateAlcohol');
+  assert.equal(conf.nWith, 4);
+  assert.equal(conf.confoundedByFreeDays, true); // alcohol only on free nights → flagged
+
 });
 
 test('plan: late chronotype with early work constraint gets gradual advance', () => {

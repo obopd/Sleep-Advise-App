@@ -7,7 +7,7 @@
 //
 // Anchors used (all approximate, individual variation is about ±1 h):
 //   DLMO           ≈ habitual sleep onset − 2 h            (Burgess 2003; Sletten 2010)
-//   Wake maintenance zone ≈ the 2 h before DLMO           (Lavie 1986; Strogatz 1987)
+//   Wake maintenance zone ≈ the 3 h before DLMO           (Shekleton 2013; Lavie 1986; Strogatz 1987)
 //   Sleep gate     ≈ DLMO + 2 h                             (Lavie 1986; Sletten 2010)
 //   Melatonin peak ≈ DLMO + 4 h, offset ≈ DLMO + 10 h
 //   Core body temperature minimum ≈ DLMO + 7 h              (Benloucif 2005)
@@ -16,6 +16,7 @@
 //   Process S time constants τ_rise = 18.2 h, τ_decay = 4.2 h (Daan, Beersma & Borbély 1984)
 
 import { wrap, circularMean, parseHHMM, daysBetween, forward, DAY } from './time.js';
+import { modelPhase } from './lightModel.js';
 
 export const DLMO_TO_ONSET = 120;
 export const DLMO_TO_CBTMIN = 420;
@@ -25,11 +26,16 @@ export const TAU_DECAY_H = 4.2;
 /**
  * Estimate circadian phase (DLMO) from, in priority order:
  *  1. a measured DLMO from the last 30 days (saliva/blood melatonin assay),
- *  2. the last 14 diary nights (recent nights weighted more; half-life 3 days, since the
- *     clock shifts at most ~1–1.5 h per day),
- *  3. the MCTQ questionnaire in the profile.
+ *  2. the Forger 1999 light model driven by real wearable light data (≥ 30 % of the
+ *     modelled period covered by measured lux / daylight),
+ *  3. the last 14 diary nights (recent nights weighted more; half-life 3 days, since the
+ *     clock shifts at most ~1–1.5 h per day). In real-world validation this "bedtime − 2 h"
+ *     proxy was as accurate as light models for people on regular schedules (Cheng 2021),
+ *     so it stays the default without light data. The light model run on diary-imputed light
+ *     is attached as `modelCheck` for comparison.
+ *  4. the MCTQ questionnaire in the profile.
  */
-export function estimatePhase({ nights = [], measured = [], profile = null, today = null } = {}) {
+export function estimatePhase({ nights = [], measured = [], profile = null, today = null, entries = null, lightLog = {} } = {}) {
   const ref = today ?? nights.at(-1)?.date ?? null;
 
   const recentMeasured = measured
@@ -40,12 +46,19 @@ export function estimatePhase({ nights = [], measured = [], profile = null, toda
     return withMarkers(parseHHMM(recentMeasured.dlmo), 'measured', 30, recentMeasured);
   }
 
+  const model = entries ? modelPhase(entries, lightLog) : null;
+  if (model && model.measuredFraction >= 0.3) {
+    return withMarkers(model.dlmo, 'light-model', 60, model);
+  }
+
   const last = nights.at(-1)?.date;
   const recent = last ? nights.filter((n) => daysBetween(n.date, last) < 14) : [];
   if (recent.length >= 3) {
     const weights = recent.map((n) => Math.pow(0.5, daysBetween(n.date, last) / 3));
     const onset = circularMean(recent.map((n) => n.onset), weights);
-    return withMarkers(wrap(onset - DLMO_TO_ONSET), 'diary', 60, { nights: recent.length });
+    const est = withMarkers(wrap(onset - DLMO_TO_ONSET), 'diary', 60, { nights: recent.length });
+    if (model) est.modelCheck = model;
+    return est;
   }
 
   const q = profile?.mctq;
@@ -67,7 +80,7 @@ function withMarkers(dlmo, source, uncertaintyMin, detail) {
     source,
     uncertaintyMin,
     detail,
-    wmzStart: wrap(dlmo - 120),
+    wmzStart: wrap(dlmo - 180),
     wmzEnd: dlmo,
     sleepGate: wrap(dlmo + DLMO_TO_ONSET),
     melatoninPeak: wrap(dlmo + 240),
@@ -124,11 +137,11 @@ export function cortisolAt(t, dlmo, wake) {
 }
 
 /**
- * Circadian alerting signal (Process C), 0–1. Peaks in the wake maintenance zone
- * (~1 h before DLMO) and bottoms out at the core body temperature minimum.
+ * Circadian alerting signal (Process C), 0–1. Peaks mid wake maintenance zone
+ * (~1.5 h before DLMO) and bottoms out at the core body temperature minimum.
  */
 export function circadianAlertingAt(t, dlmo) {
-  const peak = wrap(dlmo - 60);
+  const peak = wrap(dlmo - 90);
   const trough = wrap(dlmo + DLMO_TO_CBTMIN);
   const fall = forward(peak, trough);
   const s = forward(peak, t);

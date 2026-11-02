@@ -9,6 +9,7 @@ import { chronotypeFromNights, chronotypeFromProfile } from './chronotype.js';
 import { resolveSleepNeed } from './sleepNeed.js';
 import { habitFrequencies, personalAssociations, caffeineCutoffHours, HABIT_LABELS } from './habits.js';
 import { clinicalFlags } from './safety.js';
+import { predictShift, lastContiguousBlock, habitualNight } from './lightModel.js';
 
 export const SLEEP_LATENCY_BUFFER = 15; // minutes allowed to fall asleep (Ohayon 2017: ≤ 30 normal)
 export const SHIFT_PER_DAY = 15; // conservative gradual shift, minutes per day (Eastman & Burgess 2009)
@@ -16,12 +17,12 @@ export const ALIGN_TOLERANCE = 30;
 
 const round5 = (m) => wrap(Math.round(m / 5) * 5);
 
-export function buildPlan({ profile = {}, entries = [], measured = [], today = null } = {}) {
+export function buildPlan({ profile = {}, entries = [], measured = [], lightLog = {}, today = null } = {}) {
   const nights = validNights(entries);
   const summary = summarize(entries);
   const need = resolveSleepNeed(profile);
   const needMin = need.target * 60;
-  const phase = estimatePhase({ nights, measured, profile, today });
+  const phase = estimatePhase({ nights, measured, profile, today, entries, lightLog });
   const chronotype =
     chronotypeFromNights(summary?.nights ?? [], Number(profile?.mctq?.workdays ?? 5)) ??
     chronotypeFromProfile(profile);
@@ -56,7 +57,8 @@ export function buildPlan({ profile = {}, entries = [], measured = [], today = n
     const delta = signedDiff(requiredOnset, naturalOnset); // > 0: body clock is later than required
     target = { onset: requiredOnset, wake: constraintWake };
     if (delta > ALIGN_TOLERANCE) {
-      alignment = { status: 'advance', minutes: delta, steps: transitionSteps(naturalOnset, requiredOnset, constraintWake, today) };
+      const steps = transitionSteps(naturalOnset, requiredOnset, constraintWake, today);
+      alignment = { status: 'advance', minutes: delta, steps, prediction: predictPlan(entries, steps, delta) };
     } else if (delta < -ALIGN_TOLERANCE) {
       // Body is earlier than needed: the user can sleep at natural times and wake before the constraint.
       target = { onset: naturalOnset, wake: wrap(naturalOnset + needMin) };
@@ -147,11 +149,15 @@ export function buildPlan({ profile = {}, entries = [], measured = [], today = n
       detail:
         `Your estimated melatonin onset (≈ ${fmtShort(phase.dlmo)}) means your body is ready to sleep around ${fmtShort(naturalOnset)}, ` +
         `but you need to be asleep by ${fmtShort(schedule.sleepOnset)} to get ${need.target} h before ${fmtShort(constraintWake)}. ` +
-        `Keep your wake time fixed and move lights-out ${SHIFT_PER_DAY} min earlier each day (about ${alignment.steps.length} days) instead of jumping all at once: ` +
+        `Keep your wake time fixed and move lights-out ${SHIFT_PER_DAY} min earlier each day for ${alignment.steps.length} days instead of jumping all at once` +
+        (alignment.prediction?.reachedDay
+          ? ` (a circadian model simulation predicts your clock catches up around day ${alignment.prediction.reachedDay})`
+          : '') +
+        ': ' +
         `going to bed during your wake maintenance zone (≈ ${fmtShort(phase.wmzStart)}–${fmtShort(phase.wmzEnd)}) usually means lying awake. ` +
         'Use bright morning light right after waking and keep evenings dim. This is what moves the clock.',
       grade: 'B',
-      refs: ['eastman2009', 'khalsa2003', 'lavie1986', 'strogatz1987'],
+      refs: ['eastman2009', 'khalsa2003', 'shekleton2013', 'lavie1986', 'forger1999'],
     });
     recs.push({
       priority: 3,
@@ -180,7 +186,7 @@ export function buildPlan({ profile = {}, entries = [], measured = [], today = n
       title: 'Your planned bedtime falls in your wake maintenance zone',
       detail: `Between ≈ ${fmtShort(phase.wmzStart)} and ${fmtShort(phase.wmzEnd)} your circadian alerting signal peaks, so falling asleep then is hard.`,
       grade: 'B',
-      refs: ['lavie1986', 'strogatz1987'],
+      refs: ['shekleton2013', 'lavie1986', 'strogatz1987'],
     });
   }
 
@@ -271,6 +277,24 @@ export function buildPlan({ profile = {}, entries = [], measured = [], today = n
     habitFrequency: habits,
     flags,
     dataQuality,
+  };
+}
+
+/**
+ * Simulate the shift plan with the Forger 1999 model (fixed wake, progressively earlier
+ * lights-out, 30 min outdoor light after waking, dim evenings) and report the predicted
+ * DLMO shift per day and the day the clock is predicted to reach the target.
+ */
+export function predictPlan(entries, steps, neededMin) {
+  const block = lastContiguousBlock(entries);
+  if (block.length < 3 || !steps.length) return null;
+  const days = predictShift(habitualNight(block), steps);
+  const reached = days.find((d) => -d.shiftMin >= neededMin - ALIGN_TOLERANCE / 2);
+  return {
+    days,
+    reachedDay: reached ? reached.day : null,
+    finalShiftMin: days.at(-1)?.shiftMin ?? 0,
+    model: 'forger1999',
   };
 }
 

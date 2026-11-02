@@ -7,6 +7,7 @@ import { openHowItWorks } from './why.js';
 import { row } from './tonight.js';
 import { AppleHealthParser, parseSleepCsv, parseLightCsv, mergeEntries, mergeLightLog, pruneLightLog } from '../engine/importers.js';
 import { applyTheme } from './theme.js';
+import { profileAge } from '../engine/sleepNeed.js';
 
 const patchProfile = (patch) => update({ ...app.state, profile: { ...app.state.profile, ...patch } });
 
@@ -20,12 +21,13 @@ export function renderSettings(root) {
   col.append(h('h1', { class: 'display page-title' }, 'Settings'));
 
   // ---- You
-  const age = h('input', { type: 'number', inputmode: 'numeric', class: 'num-input', min: 6, max: 110, value: p.age ?? '', 'aria-label': 'Age',
-    onchange: (e) => patchProfile({ age: e.target.value ? Number(e.target.value) : '' }) });
+  const age = h('input', { type: 'date', class: 'time-input', max: todayKey(), value: p.birthday ?? '', 'aria-label': 'Birthday',
+    onchange: (e) => patchProfile({ birthday: e.target.value }) });
+  const years = profileAge(p);
   const need = h('input', { type: 'number', inputmode: 'decimal', class: 'num-input', min: 4, max: 12, step: 0.25, placeholder: plan.need ? String(plan.need.target) : '8',
     value: p.personalNeedHours ?? '', 'aria-label': 'Sleep need in hours', onchange: (e) => patchProfile({ personalNeedHours: e.target.value }) });
   col.append(group('You',
-    field('Age', age),
+    field('Birthday', age, { sub: years != null ? `${years} years old` : null }),
     field('Up by on workdays', timeInput(p.workWake, (v) => patchProfile({ workWake: v }), 'Up by on workdays'), { sub: 'Leave empty if you have no fixed start' }),
     field('Sleep need (hours)', need, { sub: plan.need ? `Recommended for you: ${plan.need.min}–${plan.need.max} h` : null }),
     row({ ic: 'calendar', title: 'Sleep type quiz', sub: plan.chronotype ? `You: ${plan.chronotype.category}` : '4 quick questions', onclick: openQuiz })));

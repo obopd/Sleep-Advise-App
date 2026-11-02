@@ -2,6 +2,21 @@
 // Children/teens: AASM pediatric consensus (Paruthi 2016).
 // Adults: AASM/SRS consensus (Watson 2015, ≥7 h) and NSF ranges (Hirshkowitz 2015).
 
+/** Whole years between a 'YYYY-MM-DD' birthday and today (local date). Null if invalid. */
+export function ageFromBirthday(birthday, today = new Date()) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthday || '');
+  if (!m) return null;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  let age = today.getFullYear() - y;
+  if (today.getMonth() + 1 < mo || (today.getMonth() + 1 === mo && today.getDate() < d)) age--;
+  return age >= 0 && age < 130 ? age : null;
+}
+
+/** Age from the profile: birthday when given, else an older saved age. */
+export function profileAge(profile, today = new Date()) {
+  return ageFromBirthday(profile?.birthday, today) ?? (Number(profile?.age) || null);
+}
+
 export function sleepNeedForAge(age) {
   const a = Number(age);
   if (!Number.isFinite(a) || a <= 0) {
@@ -19,7 +34,7 @@ export function sleepNeedForAge(age) {
  * vacations once rested) is honoured but clamped to the recommended range.
  */
 export function resolveSleepNeed(profile) {
-  const base = sleepNeedForAge(profile?.age);
+  const base = sleepNeedForAge(profileAge(profile));
   const personal = Number(profile?.personalNeedHours);
   if (Number.isFinite(personal) && personal > 0) {
     const clamped = Math.min(base.max, Math.max(base.min, personal));

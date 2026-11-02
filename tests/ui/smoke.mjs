@@ -28,7 +28,7 @@ for (const scheme of ['light', 'dark']) {
     if (n) problems.push(`${scheme} ${where}: ${n} elements wider than the screen`);
   };
   await p.goto(URL);
-  await p.fill('.ob-age', '30');
+  await p.fill('.ob-birthday', '1996-03-20');
   for (let i = 0; i < 3; i++) await p.click('text=Next');
   await p.click('text=Show my plan');
   await p.click('text=Log last night');

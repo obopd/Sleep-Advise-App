@@ -5,7 +5,7 @@ import {
   computeNight, summarize, sleepRegularityIndex, validNights,
   mctq, classify,
   estimatePhase, melatoninAt, cortisolAt, processS, dailyProfile, circadianAlertingAt,
-  sleepNeedForAge, resolveSleepNeed,
+  sleepNeedForAge, resolveSleepNeed, ageFromBirthday, profileAge,
   evaluateHabits, caffeineCutoffHours, personalAssociations,
   buildPlan, transitionSteps, REFERENCES,
 } from '../src/engine/index.js';
@@ -106,6 +106,17 @@ test('process S rises while awake and falls while asleep', () => {
   const prof = dailyProfile({ dlmo: h('21:00') }, { onset: h('23:00'), wake: h('07:00') }, { brightLightUntil: h('23:00') });
   assert.equal(prof.length, 145);
   assert.ok(prof.some((p) => p.lightSuppressed));
+});
+
+test('age from birthday (before and after the birthday this year)', () => {
+  const today = new Date(2026, 10, 2); // Nov 2, 2026
+  assert.equal(ageFromBirthday('1996-11-02', today), 30);
+  assert.equal(ageFromBirthday('1996-11-03', today), 29);
+  assert.equal(ageFromBirthday('2010-01-15', today), 16);
+  assert.equal(ageFromBirthday('', today), null);
+  assert.equal(profileAge({ birthday: '2010-01-15' }, today), 16);
+  assert.equal(profileAge({ age: 40 }, today), 40); // older saved profiles keep working
+  assert.equal(resolveSleepNeed({ birthday: '2012-06-01' }).group, 'Teen 13–17');
 });
 
 test('sleep need by age', () => {

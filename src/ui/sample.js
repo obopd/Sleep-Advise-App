@@ -33,7 +33,7 @@ export function sampleState(today) {
   }
   return {
     profile: {
-      age: 29,
+      birthday: '1997-05-14',
       workWake: '06:45',
       personalNeedHours: '',
       shiftWork: false,

@@ -38,7 +38,8 @@ tests/        *.test.js (node:test, engine) · ui/smoke.mjs (Playwright, phone l
 
 - Engine items carry `{ icon, title, short, detail, grade, refs }`. Keep `title` ≤ 40 chars and
   `short` one plain sentence; a test enforces it.
-- State (`sleep-advisor:v1`): `{ profile, entries, measured, lightLog, settings }`. Never drop user
+- State (`sleep-advisor:v1`): `{ profile, entries, measured, lightLog, settings }`. The profile stores
+  `birthday` (age is derived with `profileAge`; older profiles may still have `age`). Never drop user
   data; if the shape changes, migrate in `storage.load()`.
 
 ## Workflow

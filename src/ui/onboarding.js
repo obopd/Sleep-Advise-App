@@ -7,22 +7,22 @@ import { todayKey } from './dom.js';
 
 export function renderOnboarding(root) {
   const a = {
-    age: app.state.profile.age ?? '',
+    birthday: app.state.profile.birthday ?? '',
     mctq: { workdays: 5, workOnset: '23:30', workWake: '07:00', freeOnset: '00:30', freeWake: '08:30', freeAlarm: false },
     workWake: '',
   };
   let step = 0;
 
-  const finish = () => update({ ...app.state, profile: { ...app.state.profile, age: a.age ? Number(a.age) : '', mctq: a.mctq, workWake: a.workWake, onboarded: true } });
+  const finish = () => update({ ...app.state, profile: { ...app.state.profile, birthday: a.birthday, mctq: a.mctq, workWake: a.workWake, onboarded: true } });
 
   const steps = [
     () => {
-      const age = h('input', { type: 'number', inputmode: 'numeric', class: 'ob-age', min: 6, max: 110, placeholder: '25', value: a.age, 'aria-label': 'Age', oninput: (e) => { a.age = e.target.value; } });
+      const age = h('input', { type: 'date', class: 'ob-birthday', max: todayKey(), value: a.birthday, 'aria-label': 'Birthday', onchange: (e) => { a.birthday = e.target.value; } });
       return [
         h('div', { class: 'brand', 'aria-hidden': 'true' }, icon('moon')),
         h('h1', { class: 'display' }, 'Let’s find your sleep rhythm'),
         h('p', {}, 'Four quick questions. Your answers set a first plan; logging a few nights makes it yours.'),
-        h('p', { style: 'color:var(--fg);font-weight:600' }, 'How old are you?'),
+        h('p', { style: 'color:var(--fg);font-weight:600' }, 'When is your birthday?'),
         age,
       ];
     },

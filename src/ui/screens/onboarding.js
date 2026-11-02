@@ -29,7 +29,7 @@ export function renderOnboarding(root) {
       user: {
         ...app.state.user,
         onboarded: true,
-        consent: { local_storage: now, research: null, cloud: null },
+        consent: { local_storage: now, research: null },
         tracking: a.tracking,
         profile: {
           ...app.state.user.profile,

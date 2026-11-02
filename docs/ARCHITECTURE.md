@@ -5,10 +5,9 @@
 | Decision | Choice | Why |
 |---|---|---|
 | App type | Installable PWA, plain HTML/CSS/JS ES modules, no build step | Existing working architecture; the owner builds from a phone (same as Planner); GitHub Pages hosting; nothing to compile or upgrade. |
-| Storage | **Local-first** (browser `localStorage`), optional cloud | Works with no account or server; sensitive data stays on the device by default. |
-| Cloud (optional) | Supabase: Postgres + Auth + Row Level Security, via REST `fetch` (no SDK) | Server-side authorisation without a custom server; same pattern as Planner; the browser only ever has the public anon key. |
+| Storage | **On-device only** (browser `localStorage`); backup and export as files | No backend by the owner's decision: no accounts, no server, nothing leaves the phone except files the user saves. |
 | Modelling | Pure JS modules in `src/core/` with no DOM access | Testable with `node --test`; replaceable; can move to Python later without touching the UI. |
-| Next.js / TypeScript (suggested in the spec) | Not adopted now | Would replace a working, deployed architecture and add a build pipeline and a server the project does not need yet. Revisit if a server-side component (e.g. scheduled model training) becomes necessary. |
+| Next.js / TypeScript / Postgres (suggested in the spec) | Not adopted | The owner does not want a backend. The data model is defined once (`src/core/schema.js`) so a database could be added later without redesign. |
 
 ## Five layers
 
@@ -19,7 +18,7 @@ Layer 3  Features            core/sleep.js (per-episode values), core/features.j
 Layer 4  Models              core/models/sleepPressure.js, core/models/circadian.js, core/predict.js
 Layer 5  Advice & feedback   core/recommend.js, core/scheduler.js, core/insights.js → src/ui/screens/*
 Research                     core/research.js (exports, metrics, pairing, splits), core/zip.js
-Storage                      core/repo.js (event store), src/ui/storage.js (device), core/cloud.js (optional sync)
+Storage                      core/repo.js (event store), src/ui/storage.js (device), backup file (More → Backup)
 ```
 
 Data flows one way: records → validation → store → features (as of a time T) → models → advice. The UI never computes science; it renders what `src/ui/store.js#derive()` produced.
@@ -43,14 +42,12 @@ src/core/          science + data (no DOM)
   quality.js       completeness
   research.js      exports, data dictionary, metrics, pairing, splits
   importers.js     Apple Health XML, sleep CSV, light-sensor CSV
-  cloud.js         optional Supabase auth + sync
   forger99.js      published light-driven oscillator
   chronotype.js, clock.js, sleepNeed.js, references.js, format.js, zip.js
 src/ui/            phone UI (Planner design language)
-  app.js (shell, dock) · store.js · storage.js · forms.js · kit.js · dialogs.js · dom.js · theme.js · why.js · nav.js · config.js · sample.js
+  app.js (shell, dock) · store.js · storage.js · forms.js · kit.js · dialogs.js · dom.js · theme.js · why.js · nav.js · sample.js
   screens/         today, log, insights, plan, more, biology, research, labform, onboarding
-supabase/migrations/0001_init.sql
-tests/             node:test suites, db/ (Postgres + RLS), ui/smoke.mjs (Playwright)
+tests/             node:test suites, ui/smoke.mjs (Playwright)
 docs/              this folder
 ```
 
@@ -71,8 +68,7 @@ docs/              this folder
 
 | Layer | Command | What it covers |
 |---|---|---|
-| Unit | `npm test` | time, validation, store, features, models, rules, scheduler, insights, research metrics, importers, zip, cloud client (fake server), SQL/schema consistency |
-| Database | `npm run test:db` | migration applies twice; RLS (other users, anon, researchers, append-only predictions, deletion) on real Postgres 16 |
-| End-to-end | `npm start` + `npm run test:ui` | iPhone-sized browser, light + dark: consent gate, logging, labels, every screen, export download, no errors, no overflow |
+| Unit | `npm test` | time, validation, store, features, models, rules, scheduler, insights, research metrics, importers, zip, no-network check |
+| End-to-end | `npm start` + `npm run test:ui` | iPhone-sized browser, light + dark: consent gate, logging, labels, every screen, export and backup downloads, no errors, no overflow |
 
 Software tests check software behaviour. They say nothing about biological validity; see SCIENCE.md.

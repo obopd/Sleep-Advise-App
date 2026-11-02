@@ -102,7 +102,7 @@ for (const scheme of ['light', 'dark']) {
   await closeSheet();
 
   await p.click('.tab[data-view=more]');
-  for (const page of ['Biology', 'Research & export', 'Data quality', 'Import', 'Settings', 'Privacy & consent', 'Account & sync', 'How it works']) {
+  for (const page of ['Biology', 'Research & export', 'Data quality', 'Import', 'Settings', 'Privacy & consent', 'Backup', 'How it works']) {
     await p.click(`#view-more .row >> text=${page}`);
     await p.waitForSelector('dialog.sheet');
     await shot(`more-${page.split(' ')[0].toLowerCase()}`);
@@ -115,6 +115,10 @@ for (const scheme of ['light', 'dark']) {
       await p.waitForTimeout(300);
       await shot('biology-experimental');
       check(/Experimental/i.test(await p.textContent('dialog.sheet')), `${scheme}: experimental label missing`);
+    }
+    if (page === 'Backup') {
+      const [dl] = await Promise.all([p.waitForEvent('download'), p.click('text=Save backup file')]);
+      check(/\.json$/.test(dl.suggestedFilename()), `${scheme}: backup not a json file`);
     }
     if (page === 'Research & export') {
       const [dl] = await Promise.all([p.waitForEvent('download'), p.click('text=Download export (.zip)')]);

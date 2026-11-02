@@ -16,13 +16,13 @@ export function researchBody() {
   const r = state.research;
 
   wrap.append(section('Your research ID', null,
-    h('p', { class: 'explain' }, 'Research exports use this pseudonymous ID instead of your account so records are not directly linked to you.'),
+    h('p', { class: 'explain' }, 'Research exports use this pseudonymous ID instead of the app’s internal ID, so exported records are not directly linked to this phone.'),
     h('p', { class: 'display', style: 'font-size:22px' }, r.participant_id),
     field('Allow my records to be used for research', toggle(r.enrolled, (v) => update({ ...state, research: { ...r, enrolled: v, consent_changed_at: new Date().toISOString(), consent_version: '2026-11' } }, v ? 'Research use allowed' : 'Research use withdrawn'), 'Research consent'), { sub: 'Off by default. Withdrawing stops future use; data already shared with a study follows that study’s withdrawal rules.' })));
 
   wrap.append(section('Export my data', null,
     h('p', { class: 'explain' }, 'A ZIP of CSV files: your raw observations, calculated features, model outputs and lab results in separate files, with a data dictionary. Times are UTC with local-time columns; empty cells mean "not recorded".'),
-    field('Use research ID instead of account ID', toggle(opts.pseudonymous, (v) => { opts.pseudonymous = v; }, 'Pseudonymous')),
+    field('Use research ID instead of internal ID', toggle(opts.pseudonymous, (v) => { opts.pseudonymous = v; }, 'Pseudonymous')),
     field('Include medications (sensitive)', toggle(opts.includeSensitive, (v) => { opts.includeSensitive = v; }, 'Include medications')),
     h('button', { type: 'button', class: 'big-btn', onclick: () => download(state) }, icon('download'), 'Download export (.zip)'),
     h('p', { class: 'note' }, `Export format v${EXPORT_VERSION}. Nothing is uploaded: the file is created on this device.`)));

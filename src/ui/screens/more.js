@@ -1,4 +1,5 @@
-// More: Biology, Research & export, Data quality, Import, Settings, Privacy, Account, About.
+// More: Biology, Research & export, Data quality, Import, Backup, Settings, Privacy, About.
+// Everything runs on the device; there is no server.
 import { h, icon } from '../dom.js';
 import { openSheet, toggle, field, segmented, ask, tell, snack } from '../dialogs.js';
 import { app, update } from '../store.js';
@@ -6,8 +7,8 @@ import { wipe } from '../storage.js';
 import { emptyState, addRecord } from '../../core/repo.js';
 import { toMs } from '../../core/time.js';
 import { AppleHealthParser, sleepCsvToRecords, lightCsvToRecords } from '../../core/importers.js';
-import { createCloud } from '../../core/cloud.js';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config.js';
+import { SCHEMA_VERSION } from '../../core/repo.js';
+import { save } from '../storage.js';
 import { resolveSleepNeed, profileAge } from '../../core/sleepNeed.js';
 import { chronotypeFromProfile } from '../../core/chronotype.js';
 import { row, section, chips, multiChips, numberInput, emptyNote, clock } from '../kit.js';
@@ -16,11 +17,6 @@ import { researchBody } from './research.js';
 import { REFERENCES } from '../../core/references.js';
 import { applyTheme } from '../theme.js';
 
-export const cloud = createCloud({
-  url: SUPABASE_URL,
-  anonKey: SUPABASE_ANON_KEY,
-  storage: { get: () => { try { return JSON.parse(localStorage.getItem('sleep-advisor:session')); } catch { return null; } }, set: (s) => { try { if (s) localStorage.setItem('sleep-advisor:session', JSON.stringify(s)); else localStorage.removeItem('sleep-advisor:session'); } catch { /* blocked */ } } },
-});
 
 const PAGES = {
   biology: ['Biology', 'flask', 'Sleep pressure, body-clock timing, light', () => biologyBody()],
@@ -29,7 +25,7 @@ const PAGES = {
   import: ['Import', 'upload', 'Apple Health, sleep diary or light-sensor files', () => importBody()],
   settings: ['Settings', 'sliders', 'Profile, schedule, what to track, appearance', () => settingsBody()],
   privacy: ['Privacy & consent', 'lock', 'Where your data is and what it is used for', () => privacyBody()],
-  account: ['Account & sync', 'cloud', SUPABASE_URL ? 'Sign in to back up and sync' : 'Local-only in this version', () => accountBody()],
+  backup: ['Backup', 'download', 'Save or restore a copy of all your data as a file', () => backupBody()],
   about: ['How it works', 'info', 'The science, and what this app cannot do', () => aboutBody()],
 };
 
@@ -187,17 +183,16 @@ function privacyBody() {
   const s = app.state;
   const c = s.user.consent ?? {};
   return h('div', { class: 'form' },
-    h('p', { class: 'explain' }, 'Your records are stored on this phone (browser storage). Nothing is sent anywhere unless you turn on cloud sync, and nothing is shared with third parties or used to train models without your permission.'),
+    h('p', { class: 'explain' }, 'Your records are stored only on this phone (browser storage). The app has no server: nothing is sent anywhere, shared with third parties, or used to train models. Data leaves the phone only in files you export yourself.'),
     h('table', { class: 'mini' }, h('tbody', {},
       h('tr', {}, h('td', {}, 'Store records on this device'), h('td', {}, c.local_storage ? `Agreed ${new Date(c.local_storage).toLocaleDateString()}` : '–')),
-      h('tr', {}, h('td', {}, 'Cloud backup and sync'), h('td', {}, cloud.session ? 'On' : 'Off')),
       h('tr', {}, h('td', {}, 'Research use'), h('td', {}, s.research.enrolled ? 'Allowed' : 'Not allowed')),
       h('tr', {}, h('td', {}, 'Medication records'), h('td', {}, s.user.tracking.medications ? 'Tracked' : 'Off')))),
     section('Your rights', null, h('ul', { class: 'plain' },
       h('li', {}, 'See and correct every entry (Log). Corrections keep the earlier version so nothing is silently changed.'),
       h('li', {}, 'Export everything (More → Research & export).'),
-      h('li', {}, 'Delete everything on this device below. With an account, deleting the account removes the cloud copy too, including research records.'))),
-    section('Retention', null, h('p', { class: 'explain' }, 'Records stay until you delete them. The app keeps no backups on any server in local-only mode; the earlier app version’s copy on this device is kept as a fallback until you delete all data.')),
+      h('li', {}, 'Delete everything on this device below. Copies you exported or backed up yourself are not affected; delete those files separately.'))),
+    section('Retention', null, h('p', { class: 'explain' }, 'Records stay on this phone until you delete them. There are no server copies. Clearing the browser’s website data or removing the app also deletes them, so save a backup file from time to time. The earlier app version’s copy on this device is kept as a fallback until you delete all data.')),
     h('button', { type: 'button', class: 'big-btn danger', onclick: async () => {
       if (!(await ask({ title: 'Delete all data on this device?', message: 'Your sleep records, entries, predictions, lab results and settings will be removed from this phone. This cannot be undone. Export first if you want a copy.', ok: 'Delete everything', danger: true }))) return;
       wipe();
@@ -206,37 +201,41 @@ function privacyBody() {
     } }, icon('trash'), 'Delete all data on this device'));
 }
 
-// ---------------------------------------------------------------- Account
-function accountBody() {
-  if (!cloud.enabled) {
-    return h('div', { class: 'form' },
-      h('p', { class: 'explain' }, 'This version runs in local-only mode: everything is stored on this phone and no account is needed.'),
-      h('p', { class: 'note' }, 'To enable accounts and cloud backup, the app owner sets up a Supabase project (see docs/SETUP.md) and adds its public URL and key to src/ui/config.js. The database only lets each user reach their own records.'));
-  }
-  if (!cloud.session) {
-    const email = h('input', { type: 'email', class: 'text-input', placeholder: 'Email', autocomplete: 'email' });
-    const pass = h('input', { type: 'password', class: 'text-input', placeholder: 'Password (8+ characters)', autocomplete: 'current-password' });
-    const go = (fn) => async () => {
-      try { await fn(email.value.trim(), pass.value); snack('Signed in'); document.querySelectorAll('dialog.sheet').forEach((d) => d.close()); }
-      catch (err) { tell('Could not sign in', err.message); }
-    };
-    return h('div', { class: 'form' }, h('p', { class: 'explain' }, 'Sign in to back up and sync your records. Only you can read them.'), email, pass,
-      h('button', { type: 'button', class: 'big-btn', onclick: go(cloud.signIn) }, 'Sign in'),
-      h('button', { type: 'button', class: 'big-btn soft', onclick: go(cloud.signUp) }, 'Create account'));
-  }
+// ---------------------------------------------------------------- Backup (local file)
+function backupBody() {
+  const status = h('p', { class: 'note', role: 'status' });
   return h('div', { class: 'form' },
-    h('p', { class: 'explain' }, `Signed in as ${cloud.session.user?.email ?? 'you'}.`),
-    h('button', { type: 'button', class: 'big-btn', onclick: async () => {
-      try {
-        const merged = await cloud.sync(app.state.tables);
-        update({ ...app.state, tables: { ...app.state.tables, ...merged } }, 'Synced');
-      } catch (err) { tell('Sync failed', err.message); }
-    } }, icon('cloud'), 'Sync now'),
-    h('button', { type: 'button', class: 'big-btn soft', onclick: async () => { await cloud.signOut(); snack('Signed out'); } }, 'Sign out'),
-    h('button', { type: 'button', class: 'danger-link', onclick: async () => {
-      if (!(await ask({ title: 'Delete your account?', message: 'Your cloud copy, including research records linked to you, is deleted. Records on this phone stay until you delete them.', ok: 'Delete account', danger: true }))) return;
-      try { await cloud.deleteAccount(); snack('Account deleted'); } catch (err) { tell('Could not delete the account', err.message); }
-    } }, 'Delete account'));
+    h('p', { class: 'explain' }, 'There is no account or server, so your records exist only on this phone. Save a backup file regularly (e.g. to Files or iCloud Drive) to keep a copy or move to another phone.'),
+    h('button', { type: 'button', class: 'big-btn', onclick: () => {
+      const blob = new Blob([JSON.stringify({ app: 'sleep-advisor', backup_version: 1, saved_at: new Date().toISOString(), state: app.state })], { type: 'application/json' });
+      const a = h('a', { href: URL.createObjectURL(blob), download: `sleep-advisor-backup-${new Date().toISOString().slice(0, 10)}.json` });
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      status.textContent = 'Backup file created.';
+    } }, icon('download'), 'Save backup file'),
+    h('button', { type: 'button', class: 'big-btn soft', onclick: async () => {
+      const input = h('input', { type: 'file', accept: 'application/json,.json', style: 'display:none' });
+      document.body.append(input);
+      input.addEventListener('change', async () => {
+        const f = input.files[0];
+        input.remove();
+        if (!f) return;
+        try {
+          const data = JSON.parse(await f.text());
+          const st = data?.state;
+          if (data?.app !== 'sleep-advisor' || st?.schema_version !== SCHEMA_VERSION || !st.tables) throw new Error('This is not a Sleep Advisor backup from this version.');
+          if (!(await ask({ title: 'Replace your data?', message: `Everything on this phone is replaced by the backup from ${new Date(data.saved_at).toLocaleDateString()}.`, ok: 'Replace', danger: true }))) return;
+          save(st);
+          update(st, 'Backup restored');
+          applyTheme(st.settings?.theme);
+        } catch (err) { tell('Could not restore', err.message); }
+      });
+      input.click();
+    } }, icon('upload'), 'Restore from backup'),
+    status,
+    h('p', { class: 'note' }, 'The backup contains all your records, including medication entries if you made any. Keep it somewhere private.'));
 }
 
 // ---------------------------------------------------------------- About

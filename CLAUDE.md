@@ -4,7 +4,7 @@ Guidance for AI assistants working in this repository.
 
 ## What this is
 
-**Sleep Advisor**: a research-oriented sleep diary and advisor PWA (Safari → Add to Home Screen). It collects longitudinal sleep and behaviour records, gives transparent advice, estimates sleep pressure, and prepares data for validating circadian models against laboratory measurements. Same owner and design language as **Planner** (github.com/obopd/APP-Design). Plain HTML/CSS/JS ES modules, no build step, no npm dependencies. Read docs/ARCHITECTURE.md and docs/SCIENCE.md before changing behaviour.
+**Sleep Advisor**: a research-oriented sleep diary and advisor PWA (Safari → Add to Home Screen). It collects longitudinal sleep and behaviour records, gives transparent advice, estimates sleep pressure, and prepares data for validating circadian models against laboratory measurements. Same owner and design language as **Planner** (github.com/obopd/APP-Design). Plain HTML/CSS/JS ES modules, no build step, no npm dependencies. **No backend by the owner's decision**: no accounts, no server, no network requests besides the app's own files (a test enforces it). Data leaves the phone only as files the user saves (backup, export). Read docs/ARCHITECTURE.md and docs/SCIENCE.md before changing behaviour.
 
 ## Scientific rules (mandatory)
 
@@ -27,7 +27,7 @@ Guidance for AI assistants working in this repository.
 
 ## Structure
 
-See docs/ARCHITECTURE.md. Science and data in `src/core/` (no DOM). UI in `src/ui/` (screens in `src/ui/screens/`). SQL in `supabase/migrations/` (must mirror src/core/schema.js; a test checks). After schema changes run `node scripts/gen-dictionary.mjs`.
+See docs/ARCHITECTURE.md. Science and data in `src/core/` (no DOM). UI in `src/ui/` (screens in `src/ui/screens/`). After schema changes run `node scripts/gen-dictionary.mjs`.
 
 ## Workflow
 
@@ -35,7 +35,6 @@ See docs/ARCHITECTURE.md. Science and data in `src/core/` (no DOM). UI in `src/u
 | --- | --- |
 | Run | `npm start` → http://localhost:5173 |
 | Unit/integration tests | `npm test` |
-| DB + RLS tests | `npm run test:db` (local Postgres) |
 | Phone UI test | `npm start` then `npm run test:ui` (SHOTS=dir for screenshots) |
 
 Add tests with each feature; look at phone screenshots of UI changes in light and dark; bump `CACHE` in sw.js and keep `SHELL` in sync with every loaded file; keep docs/STATUS.md and this file current.

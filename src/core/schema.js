@@ -1,6 +1,5 @@
 // One definition of every table: used for validation, CSV export columns and the data
-// dictionary. supabase/migrations/0001_init.sql mirrors these definitions; a test checks
-// that every column listed here exists in the SQL.
+// dictionary (docs/DATA_DICTIONARY.md is generated from it).
 //
 // Data categories (spec §2.1) are recorded per table so they are never mixed:
 //   observed   — supplied by the user or a device

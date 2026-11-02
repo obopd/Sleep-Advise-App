@@ -170,3 +170,12 @@ test('schema: every table has id, required provenance fields and unique column n
     assert.ok(cols.includes('id') && cols.includes('source') && cols.includes('tz') || name === 'daily_features' || name === 'model_predictions', name);
   }
 });
+
+test('no backend: the app makes no network requests to other hosts', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const files = [];
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).forEach((e) => (e.isDirectory() ? walk(`${d}/${e.name}`) : files.push(`${d}/${e.name}`)));
+  walk(new URL('../src', import.meta.url).pathname);
+  for (const f of files) assert.doesNotMatch(readFileSync(f, 'utf8'), /fetch\(|XMLHttpRequest|WebSocket|https?:\/\/(?!www\.w3\.org)/, f);
+  assert.match(readFileSync(new URL('../index.html', import.meta.url), 'utf8'), /connect-src 'self';/);
+});

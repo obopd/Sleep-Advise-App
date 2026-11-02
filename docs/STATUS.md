@@ -1,4 +1,4 @@
-# Release report: v0.2.0 (research foundation)
+# Release report: v0.3.0 (on-device, no backend)
 
 Date: 2026-11-02. Branch: `claude/sleep-advisor-hormone-tracking-m7li3l`. Live: https://obopd.github.io/Sleep-Advise-App/
 
@@ -6,9 +6,8 @@ Date: 2026-11-02. Branch: `claude/sleep-advisor-hormone-tracking-m7li3l`. Live: 
 
 | Suite | Result |
 |---|---|
-| `npm test` (8 files, unit + integration) | **68 / 68 pass**: data model & time 16, analytics & models 26, research 8, importers & Forger model 5, cloud client 5, profile/chronotype/references 3, SQL ↔ schema 3, zip 2 |
-| `npm run test:db` (Postgres 16, migration run twice) | **Pass**: per-user isolation, anon, researcher access, append-only predictions, lab-write restrictions, check constraints, account deletion |
-| `npm run test:ui` (iPhone 13, light + dark) | **Pass**: consent gate, onboarding, sleep logging, caffeine, nap, labels, every screen and More page, experimental opt-in, ZIP download, no page errors, no horizontal overflow |
+| `npm test` (6 files, unit + integration) | **61 / 61 pass**: data model & time 17 (incl. no-network check), analytics & models 26, research 8, importers & Forger model 5, profile/chronotype/references 3, zip 2 |
+| `npm run test:ui` (iPhone 13, light + dark) | **Pass**: consent gate, onboarding, sleep logging, caffeine, nap, labels, every screen and More page, experimental opt-in, export ZIP and backup downloads, no page errors, no horizontal overflow |
 
 Scenarios covered: regular, delayed, irregular sleep; night-shift daytime sleep; naps and multiple episodes; missing onset, missing end, missing data; overlapping and duplicate entries; sensor vs user disagreement; invalid units; time-zone travel; DST spring-forward and fall-back; no-leakage features; prediction de-duplication; unsupported populations.
 
@@ -23,16 +22,14 @@ These tests check software behaviour only. **No model is biologically validated.
 * Dashboard, insights (associations with minimum n), scheduler, rule-based recommendations
 * Research export (ZIP of CSVs, data dictionary, manifest, pseudonymous IDs, sensitive opt-in); lab result entry; leakage-safe pairing; circular metrics; subgroup reporting; participant/temporal splits
 * Apple Health / sleep CSV / light-sensor CSV imports
-* SQL schema with RLS (tested on Postgres); local data deletion; CSP
+* Local backup file (save / restore); local data deletion; CSP; no-network guarantee (tested)
 
 ### Implemented but not fully tested
-* Cloud sign-up/sign-in/sync/account deletion: client tested against a fake server and SQL/RLS tested on Postgres, but **not yet run against a real Supabase project**. Sync is last-write-wins per record (no three-way merge, no offline queue).
+* Backup restore: format checked and covered by the download test; restore itself verified manually only.
 * "Model check" screen (UI over the tested pairing/metrics code), exercised only with sample data.
 * Sleep-pressure chart and timing chart: visual check only.
 
 ### Requires external credentials or hardware
-* Supabase project (URL + anon key in `src/ui/config.js`), email settings.
-* Wearable cloud APIs (Fitbit, Oura, Withings, Garmin): vendor registration + a server for secrets.
 * HealthKit / Health Connect live sync: native app.
 * Light sensors for the light-driven model (any logger exporting timestamp + lux).
 
@@ -44,9 +41,9 @@ These tests check software behaviour only. **No model is biologically validated.
 
 ### Not implemented
 * Reminders / notifications; app passcode
-* Three-way merge sync and offline queue
 * Spectral/melanopic sensor parsers
-* Server-side jobs (scheduled feature/prediction generation)
+* IndexedDB storage
+* By design (no backend): accounts, cloud sync, vendor cloud APIs (Fitbit, Oura, Withings, Garmin)
 
 ## Outstanding defects / limitations
 * Local storage capacity (~5 MB typical): long periods of 10-minute light data (≈ 144 rows/day) may fill it; IndexedDB is the planned fix.
@@ -55,17 +52,17 @@ These tests check software behaviour only. **No model is biologically validated.
 * Data entered in the earlier app version is migrated; habits recorded there as "minutes outside in the morning" have assumed start times (flagged in each record).
 
 ## Environment variables / configuration
-None required. Optional public configuration in `src/ui/config.js`: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. No secrets anywhere in the app.
+None. No backend, no secrets.
 
 ## Database setup
-Optional. Supabase → SQL Editor → run `supabase/migrations/0001_init.sql` (idempotent). Details: docs/SETUP.md, docs/DATABASE.md.
+None. Data is stored on the phone; see docs/DATABASE.md.
 
 ## Deployment
 GitHub Pages from the branch root (already live). Bump `CACHE` in `sw.js` after changes.
 
 ## Before real users
-1. Create the Supabase project and test sync and deletion end to end on real phones.
-2. Write a user-facing privacy notice and terms; decide data retention for cloud backups.
+1. Test backup/restore and migration from the earlier version on real iPhones.
+2. Write a short user-facing privacy notice (the app keeps data only on the phone; backups are the user's files).
 3. Add reminders and an app lock.
 4. Have the recommendation wording and safety flags reviewed by a sleep clinician.
 5. For research use: a protocol, ethics approval, consent documents and a data-management plan before collecting any laboratory measurements.

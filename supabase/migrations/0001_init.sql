@@ -41,6 +41,8 @@ create table if not exists public.sleep_episodes (
   awakenings_count                integer check (awakenings_count between 0 and 100),
   subjective_quality              integer check (subjective_quality between 1 and 5),
   morning_refreshment             integer check (morning_refreshment between 1 and 5),
+  day_type                        text check (day_type in ('workday','free_day','unknown')),
+  alarm_used                      boolean,
   quality_flags                   jsonb,
   source                          text not null,
   tz                              text not null,

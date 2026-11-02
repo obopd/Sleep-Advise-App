@@ -161,7 +161,9 @@ export function migrateV1(v1, { tz = deviceTimeZone(), now = Date.now() } = {}) 
       sleep_latency_minutes: Number.isFinite(latency) ? latency : undefined,
       wake_after_sleep_onset_minutes: e.wasoMin != null ? Number(e.wasoMin) : undefined,
       subjective_quality: e.quality ? Number(e.quality) : undefined,
-      quality_flags: { migrated: true, free_day: Boolean(e.freeDay), alarm: Boolean(e.alarm) },
+      day_type: e.freeDay ? 'free_day' : e.freeDay === false ? 'workday' : 'unknown',
+      alarm_used: typeof e.alarm === 'boolean' ? e.alarm : undefined,
+      quality_flags: { migrated: true },
     });
     const dayBefore = e.date; // v1 habits were "the previous day" = the day the night began
     for (const c of e.caffeine ?? []) {

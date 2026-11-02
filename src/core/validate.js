@@ -45,6 +45,9 @@ export function validateRecord(table, rec) {
         }
         break;
       }
+      case 'boolean':
+        if (typeof v !== 'boolean') out.push(issue('error', 'not_boolean', `${f.name} must be true or false.`, { field: f.name }));
+        break;
       default:
         break;
     }

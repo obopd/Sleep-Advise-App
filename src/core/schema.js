@@ -39,6 +39,8 @@ export const TABLES = {
       { name: 'awakenings_count', type: 'int', unit: 'count', min: 0, max: 100, description: 'Number of night-time awakenings remembered.' },
       { name: 'subjective_quality', type: 'int', unit: 'score 1–5', min: 1, max: 5, description: 'Self-rated sleep quality (1 very poor – 5 very good).' },
       { name: 'morning_refreshment', type: 'int', unit: 'score 1–5', min: 1, max: 5, description: 'How refreshed on waking (1 not at all – 5 very).' },
+      { name: 'day_type', type: 'enum', values: ['workday', 'free_day', 'unknown'], description: 'Type of the day that follows waking (work/school or free). Needed for chronotype and social-jetlag analysis.' },
+      { name: 'alarm_used', type: 'boolean', description: 'Woke by alarm. Free days without an alarm are needed for chronotype estimation (MCTQ).' },
       { name: 'quality_flags', type: 'jsonb', description: 'Data-quality notes, e.g. DST ambiguity at entry, sensor disagreement.' },
       ...audit,
     ],

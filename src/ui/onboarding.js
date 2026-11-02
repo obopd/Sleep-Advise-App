@@ -4,6 +4,7 @@ import { toggle, timeInput, field } from './dialogs.js';
 import { app, update } from './store.js';
 import { sampleState } from './sample.js';
 import { todayKey } from './dom.js';
+import { ageFromBirthday } from '../engine/sleepNeed.js';
 
 export function renderOnboarding(root) {
   const a = {
@@ -17,13 +18,22 @@ export function renderOnboarding(root) {
 
   const steps = [
     () => {
-      const age = h('input', { type: 'date', class: 'ob-birthday', max: todayKey(), value: a.birthday, 'aria-label': 'Birthday', onchange: (e) => { a.birthday = e.target.value; } });
+      const yearsText = () => {
+        const y = ageFromBirthday(a.birthday);
+        return y != null ? `${y} years old` : 'Pick your birthday';
+      };
+      const years = h('p', { class: 'ob-years display' }, yearsText());
+      const age = h('input', { type: 'date', class: 'ob-birthday', max: todayKey(), value: a.birthday, 'aria-label': 'Birthday',
+        onchange: (e) => { a.birthday = e.target.value; years.textContent = yearsText(); } });
       return [
         h('div', { class: 'brand', 'aria-hidden': 'true' }, icon('moon')),
         h('h1', { class: 'display' }, 'Let’s find your sleep rhythm'),
         h('p', {}, 'Four quick questions. Your answers set a first plan; logging a few nights makes it yours.'),
-        h('p', { style: 'color:var(--fg);font-weight:600' }, 'When is your birthday?'),
+        h('div', { style: 'display:grid;gap:4px' },
+          h('p', { style: 'color:var(--fg);font-weight:600' }, 'How old are you?'),
+          h('p', { style: 'font-size:13.5px' }, 'How much sleep you need depends on your age. Your birthday keeps it up to date.')),
         age,
+        years,
       ];
     },
     () => [

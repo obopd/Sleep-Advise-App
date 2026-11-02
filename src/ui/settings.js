@@ -27,7 +27,7 @@ export function renderSettings(root) {
   const need = h('input', { type: 'number', inputmode: 'decimal', class: 'num-input', min: 4, max: 12, step: 0.25, placeholder: plan.need ? String(plan.need.target) : '8',
     value: p.personalNeedHours ?? '', 'aria-label': 'Sleep need in hours', onchange: (e) => patchProfile({ personalNeedHours: e.target.value }) });
   col.append(group('You',
-    field('Birthday', age, { sub: years != null ? `${years} years old` : null }),
+    field('Age', age, { sub: years != null ? `${years} years old, from your birthday` : 'Pick your birthday' }),
     field('Up by on workdays', timeInput(p.workWake, (v) => patchProfile({ workWake: v }), 'Up by on workdays'), { sub: 'Leave empty if you have no fixed start' }),
     field('Sleep need (hours)', need, { sub: plan.need ? `Recommended for you: ${plan.need.min}–${plan.need.max} h` : null }),
     row({ ic: 'calendar', title: 'Sleep type quiz', sub: plan.chronotype ? `You: ${plan.chronotype.category}` : '4 quick questions', onclick: openQuiz })));

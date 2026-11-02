@@ -8,7 +8,8 @@ export function clinicalFlags({ summary, profile, needHours }) {
   if (s && s.count >= 7 && s.insomniaSymptomRate >= 3 / 7) {
     flags.push({
       level: 'warning',
-      title: 'Possible insomnia pattern',
+      title: 'Trouble sleeping often',
+      short: 'If this goes on for months, see a doctor. CBT-I therapy works best.',
       text:
         'On 3 or more nights per week you took over 30 minutes to fall asleep or were awake over 30 minutes during the night. ' +
         'If this lasts 3 months or more and affects your days, talk to a clinician. Cognitive behavioural therapy for insomnia (CBT-I) ' +
@@ -20,7 +21,8 @@ export function clinicalFlags({ summary, profile, needHours }) {
   if (s && s.count >= 7 && s.avgTst != null && s.avgTst < 6 * 60) {
     flags.push({
       level: 'warning',
-      title: 'Short sleep',
+      title: 'Very short sleep',
+      short: 'Under 6 h on average. That affects your health.',
       text: 'You average under 6 hours of sleep. Regularly sleeping under 7 hours is linked with adverse health outcomes in adults.',
       refs: ['watson2015'],
     });
@@ -30,6 +32,7 @@ export function clinicalFlags({ summary, profile, needHours }) {
     flags.push({
       level: 'info',
       title: 'Very long sleep',
+      short: 'Still tired after long sleep? Mention it to a doctor.',
       text: 'You consistently sleep well beyond the recommended range. If you still feel unrefreshed, mention it to a clinician.',
       refs: ['watson2015'],
     });
@@ -40,7 +43,8 @@ export function clinicalFlags({ summary, profile, needHours }) {
   if (sb.observedApnea || osaSigns >= 2) {
     flags.push({
       level: 'warning',
-      title: 'Screen for sleep apnea',
+      title: 'Check for sleep apnea',
+      short: 'Snoring plus tiredness can mean apnea. A doctor can test for it.',
       text:
         'Loud snoring, daytime tiredness, someone seeing you stop breathing in your sleep, or high blood pressure are STOP-Bang screening items. ' +
         'Two or more of these, or witnessed breathing pauses, warrant a medical evaluation. Sleep apnea is common and treatable.',
@@ -52,6 +56,7 @@ export function clinicalFlags({ summary, profile, needHours }) {
     flags.push({
       level: 'info',
       title: 'Shift work',
+      short: 'This plan assumes daytime work. Shift work needs a special plan.',
       text:
         'The schedule logic assumes a day-active routine. Rotating or night shifts need a specialised plan; ask an occupational or sleep medicine clinician.',
       refs: ['auger2015'],

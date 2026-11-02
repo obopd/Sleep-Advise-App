@@ -10,10 +10,21 @@ No dependencies, no build step. Requires Node 18+.
 
 ```bash
 npm start   # http://localhost:5173
-npm test    # engine unit tests (node:test)
+npm test          # engine unit tests (node:test)
+npm run test:ui   # phone-sized UI smoke test, light + dark (needs Playwright and npm start)
 ```
 
-Click **Explore with sample data** on the first screen to see a two-week demo.
+On first launch, four quick questions build a first plan; tap **Look around with sample data** to see a two-week demo.
+
+## Using the app
+
+Three tabs in a floating dock, same look as Planner:
+
+- **Tonight**: when to go to bed and wake up (if your clock needs shifting, tonight's step and the goal), a **Log last night** button, your next steps for today, and a simple body-clock strip (sleep, the wide-awake zone, when melatonin starts).
+- **Week**: hours slept for the last 7 nights against your goal, three simple numbers, your top tips, and what your own nights show.
+- **Settings**: age, wake-up time, sleep type quiz, health check, imports (Apple Health, CSV, light sensor, melatonin test), appearance, backup.
+
+Every step and tip is one plain sentence. Tap it to see **why**: the explanation, how strong the evidence is, and the sources. Logging a night takes a few taps; habits are optional.
 
 ## What it does
 
@@ -63,7 +74,7 @@ src/engine/             pure, framework-free science engine (fully unit-tested)
   safety.js             clinical red flags
   recommend.js          schedule, timeline and ranked recommendations
   references.js         citations and evidence grades
-src/ui/                 browser UI (vanilla JS, SVG chart, localStorage)
+src/ui/                 phone UI (vanilla JS, Planner design language, localStorage)
 tests/                  node:test suite
 ```
 

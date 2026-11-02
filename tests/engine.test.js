@@ -168,7 +168,7 @@ test('plan: late chronotype with early work constraint gets gradual advance', ()
   assert.equal(plan.alignment.steps.length, 9);
   assert.equal(fmtClock(plan.alignment.steps.at(-1).lightsOut), '22:45');
   assert.ok(plan.recommendations[0].title.includes('earlier'));
-  assert.ok(plan.recommendations.some((r) => r.title.includes('less than your target')));
+  assert.ok(plan.recommendations.some((r) => r.title.startsWith('Sleep ') && r.title.endsWith('more')));
 });
 
 test('plan: aligned schedule without constraint', () => {
@@ -200,5 +200,19 @@ test('every cited reference key exists', async () => {
   const keys = [...plan.timeline, ...plan.recommendations, ...plan.flags].flatMap((x) => x.refs);
   for (const k of keys) assert.ok(REFERENCES[k], `missing reference ${k}`);
   assert.ok(plan.flags.some((f) => f.title.includes('apnea')));
-  assert.ok(plan.flags.some((f) => f.title.includes('insomnia')));
+  assert.ok(plan.flags.some((f) => f.title.includes('Trouble sleeping')));
+});
+
+test('every timeline item and recommendation has plain short text and an icon', () => {
+  const plan = buildPlan({
+    profile: { age: 30, workWake: '06:30' },
+    entries: diary(14, { bed: '01:30', wake: '06:30', extra: () => ({ caffeine: [{ time: '18:00', mg: 200 }], morningLightMin: 0, screensUntil: '01:20' }) }),
+  });
+  for (const x of [...plan.timeline, ...plan.recommendations]) {
+    assert.ok(x.icon, `icon missing: ${x.title}`);
+    assert.ok(x.short && x.short.length < 120, `short missing/too long: ${x.title}`);
+    assert.ok(x.title.length <= 40, `title too long: ${x.title}`);
+  }
+  // while shifting, tonight's bedtime is the first step, later than the goal
+  assert.notEqual(plan.schedule.tonightLightsOut, plan.schedule.lightsOut);
 });

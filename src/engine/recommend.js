@@ -76,21 +76,29 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
     needHours: need.target,
     lightsOutInWmz: inWindow(target.onset - SLEEP_LATENCY_BUFFER, phase.wmzStart, phase.wmzEnd),
   };
+  // While shifting, tonight's bedtime is the first step, not the final goal.
+  schedule.tonightLightsOut = alignment.steps.length ? alignment.steps[0].lightsOut : schedule.lightsOut;
 
   // ---- 2. Daily timeline ---------------------------------------------------
-  const bed = schedule.lightsOut;
+  // Every item has a short plain-language `title` + `short` line for the app, and a
+  // longer `detail` with the evidence for the "Why?" view.
+  const bed = schedule.tonightLightsOut;
   const wake = schedule.wake;
   const timeline = [
     {
       time: wake,
-      title: 'Wake up at the same time every day',
+      icon: 'alarm',
+      title: 'Wake up',
+      short: 'Same time every day, weekends too.',
       detail: 'A fixed wake time is the strongest anchor for your body clock. On free days, get up no more than 1 h later.',
       grade: 'A',
       refs: ['phillips2017', 'windred2024', 'wittmann2006'],
     },
     {
       time: wrap(wake + 15),
-      title: 'Get outdoor light in the morning',
+      icon: 'sun',
+      title: 'Go outside',
+      short: '30 min of daylight sets your body clock.',
       detail:
         'Spend at least 30 min outdoors within the first hour after waking; even an overcast sky is far brighter than indoor light. ' +
         'Light after your core-temperature minimum shifts your clock earlier.',
@@ -99,7 +107,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
     },
     {
       time: wrap(bed - caffeineCutoffHours(100) * 60),
-      title: 'Caffeine cutoff (regular coffee or tea)',
+      icon: 'coffee',
+      title: 'Last coffee',
+      short: 'No coffee, tea or energy drinks after this.',
       detail: `Have your last regular coffee about 8.8 h before bed. For large doses (over 150 mg, e.g. pre-workout or energy drinks), stop by ${fmtShort(wrap(bed - caffeineCutoffHours(200) * 60))}.`,
       grade: 'A',
       refs: ['gardiner2023', 'drake2013'],
@@ -107,14 +117,18 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
     napWindow(wake, bed),
     {
       time: wrap(bed - 4 * 60),
-      title: 'Latest alcohol, if any',
+      icon: 'glass',
+      title: 'Last drink',
+      short: 'Alcohol breaks up sleep. Less is better.',
       detail: 'Alcohol helps you fall asleep but fragments the second half of the night and suppresses REM sleep, more so at higher doses. Less is better.',
       grade: 'A',
       refs: ['ebrahim2013'],
     },
     {
       time: wrap(bed - 3 * 60),
-      title: 'Finish your last large meal and start dimming the lights',
+      icon: 'lamp',
+      title: 'Dim the lights',
+      short: 'Lamps instead of ceiling lights. Finish dinner.',
       detail:
         'From now on, keep lighting dim and warm (≤ 10 lux melanopic EDI, roughly a dim lamp, not overhead lights). ' +
         'Evening light suppresses and delays melatonin. Heavy late meals are linked with poorer sleep (limited evidence).',
@@ -123,7 +137,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
     },
     {
       time: wrap(bed - 60),
-      title: 'Wind down; no vigorous exercise from here',
+      icon: 'book',
+      title: 'Wind down',
+      short: 'Screens away. No hard workouts.',
       detail:
         'Regular exercise improves sleep. Moderate evening exercise is fine, but end vigorous sessions at least 1 h before bed. Put bright screens away or dim them.',
       grade: 'A',
@@ -131,7 +147,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
     },
     {
       time: bed,
+      icon: 'moon',
       title: 'Lights out',
+      short: 'Dark, cool and quiet.',
       detail: 'Dark (≤ 1 lux melanopic EDI), quiet and cool. If you are not asleep after ~20 min, get up and do something calm in dim light until you feel sleepy.',
       grade: 'A',
       refs: ['brown2022', 'edinger2021'],
@@ -145,7 +163,10 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   if (alignment.status === 'advance') {
     recs.push({
       priority: 1,
-      title: `Shift your body clock ${fmtDur(alignment.minutes)} earlier`,
+      icon: 'shift',
+      title: `Move your body clock ${fmtDur(Math.round(alignment.minutes / 15) * 15)} earlier`,
+      short: `Go to bed ${SHIFT_PER_DAY} min earlier each night, keep the same wake time, and get morning light.` +
+        (alignment.prediction?.reachedDay ? ` About ${alignment.prediction.reachedDay} days.` : ''),
       detail:
         `Your estimated melatonin onset (≈ ${fmtShort(phase.dlmo)}) means your body is ready to sleep around ${fmtShort(naturalOnset)}, ` +
         `but you need to be asleep by ${fmtShort(schedule.sleepOnset)} to get ${need.target} h before ${fmtShort(constraintWake)}. ` +
@@ -161,7 +182,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
     });
     recs.push({
       priority: 3,
-      title: 'Optional: low-dose melatonin (talk to a clinician first)',
+      icon: 'pill',
+      title: 'Melatonin can help',
+      short: `A low dose (0.5 mg) around ${fmtShort(wrap(phase.dlmo - 240))} helps you shift. Ask a doctor first.`,
       detail:
         `Low-dose melatonin (0.5 mg) taken in the early evening, several hours before your melatonin onset (around ${fmtShort(wrap(phase.dlmo - 240))}–${fmtShort(wrap(phase.dlmo - 180))}), ` +
         'shifts the clock earlier. Its timing matters more than its dose. Supplement quality varies widely; check with a clinician, especially if pregnant, on medication or under 18.',
@@ -171,7 +194,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   } else if (alignment.status === 'early') {
     recs.push({
       priority: 2,
-      title: 'Your body clock runs early, which is fine for your schedule',
+      icon: 'sun',
+      title: 'Your body clock runs early',
+      short: `That's fine. Sleep when sleepy and wake at ${fmtShort(schedule.wake)}.`,
       detail:
         `You naturally get sleepy around ${fmtShort(naturalOnset)}. Following that and waking at ${fmtShort(schedule.wake)} fits your obligations. ` +
         'If you want to stay up later, bright light in the evening (before your core-temperature minimum) shifts the clock later.',
@@ -183,7 +208,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   if (schedule.lightsOutInWmz && alignment.status !== 'advance') {
     recs.push({
       priority: 1,
-      title: 'Your planned bedtime falls in your wake maintenance zone',
+      icon: 'alert',
+      title: 'Bedtime is too early for your body',
+      short: 'You will likely lie awake. Go to bed a little later.',
       detail: `Between ≈ ${fmtShort(phase.wmzStart)} and ${fmtShort(phase.wmzEnd)} your circadian alerting signal peaks, so falling asleep then is hard.`,
       grade: 'B',
       refs: ['shekleton2013', 'lavie1986', 'strogatz1987'],
@@ -193,7 +220,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   if (chronotype && chronotype.socialJetlag > 60) {
     recs.push({
       priority: 2,
-      title: `Reduce social jetlag (${fmtDur(chronotype.socialJetlag)})`,
+      icon: 'calendar',
+      title: 'Keep weekends closer to weekdays',
+      short: `Your sleep shifts ${fmtDur(chronotype.socialJetlag)} on free days. Wake by ${fmtShort(schedule.freeDayLatestWake)}.`,
       detail:
         `Your mid-sleep shifts by ${fmtDur(chronotype.socialJetlag)} between workdays and free days, like flying across time zones every weekend. ` +
         `Keep free-day wake time before ${fmtShort(schedule.freeDayLatestWake)}.`,
@@ -205,7 +234,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   if (summary && summary.count >= 7 && (summary.onsetSD > 60 || (summary.sri != null && summary.sri < 70))) {
     recs.push({
       priority: 1,
-      title: 'Make your sleep timing more regular',
+      icon: 'repeat',
+      title: 'Keep a steadier schedule',
+      short: 'The same wake time every day helps the most.',
       detail:
         `Your sleep onset varies by about ±${fmtDur(summary.onsetSD)}` +
         (summary.sri != null ? ` (Sleep Regularity Index ${Math.round(summary.sri)}/100)` : '') +
@@ -218,7 +249,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   if (summary && summary.count >= 7 && summary.avgEfficiency < 0.85 && summary.avgTib > needMin) {
     recs.push({
       priority: 1,
-      title: "Don't spend extra time in bed awake",
+      icon: 'bed',
+      title: "Don't lie awake in bed",
+      short: "Can't sleep after ~20 min? Get up and do something calm until sleepy.",
       detail:
         `Your sleep efficiency is ${Math.round(summary.avgEfficiency * 100)} % (healthy: ≥ 85 %). Use the bed only for sleep, ` +
         'get up if you are awake for more than ~20 minutes, and avoid going to bed early to "catch up". These are the stimulus-control and sleep-restriction parts of CBT-I.',
@@ -230,7 +263,9 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   if (summary && summary.count >= 7 && summary.avgTst < (need.min * 60)) {
     recs.push({
       priority: 1,
-      title: `You are sleeping ${fmtDur(needMin - summary.avgTst)} less than your target`,
+      icon: 'moon',
+      title: `Sleep ${fmtDur(Math.max(15, Math.round((needMin - summary.avgTst) / 15) * 15))} more`,
+      short: `You average ${fmtDur(summary.avgTst)}. Aim for ${need.target} h.`,
       detail: `You average ${fmtDur(summary.avgTst)} against a target of ${need.target} h (${need.group}: ${need.min}–${need.max} h). Protect the full sleep window in the schedule above.`,
       grade: 'A',
       refs: need.refs,
@@ -240,21 +275,23 @@ export function buildPlan({ profile = {}, entries = [], measured = [], lightLog 
   // Habit-driven advice, from how often each problem habit actually occurs in the diary.
   const habits = habitFrequencies(summary?.nights ? entries.filter((e) => summary.nights.some((n) => n.date === e.date)) : []);
   const habitAdvice = {
-    lateCaffeine: { grade: 'A', refs: ['gardiner2023', 'drake2013'], text: 'Move caffeine earlier; see the cutoff in your timeline. Caffeine has a ~5 h half-life, so an afternoon coffee is still about half-active at bedtime.' },
-    lateAlcohol: { grade: 'A', refs: ['ebrahim2013'], text: 'Avoid alcohol in the 4 h before bed. It worsens second-half sleep and REM sleep.' },
-    lateVigorousExercise: { grade: 'A', refs: ['stutz2019'], text: 'Finish vigorous workouts at least 1 h before bedtime.' },
-    lowMorningLight: { grade: 'B', refs: ['khalsa2003', 'brown2022'], text: 'Get ≥ 30 min of outdoor light soon after waking to anchor your clock.' },
-    lateScreens: { grade: 'B', refs: ['gooley2011', 'brown2022'], text: 'Dim screens and room lights in the last hour (ideally the last 3 h) before bed.' },
-    lateMeal: { grade: 'C', refs: ['crispim2011'], text: 'Try finishing larger meals at least 3 h before bed.' },
-    longOrLateNap: { grade: 'B', refs: ['milner2009'], text: 'Keep naps ≤ 20–30 min and in the early afternoon.' },
+    lateCaffeine: { icon: 'coffee', title: 'Coffee earlier', short: 'Late caffeine is still active at bedtime.', grade: 'A', refs: ['gardiner2023', 'drake2013'], text: 'Move caffeine earlier; see the cutoff in your timeline. Caffeine has a ~5 h half-life, so an afternoon coffee is still about half-active at bedtime.' },
+    lateAlcohol: { icon: 'glass', title: 'Less alcohol at night', short: 'No drinks in the 4 h before bed.', grade: 'A', refs: ['ebrahim2013'], text: 'Avoid alcohol in the 4 h before bed. It worsens second-half sleep and REM sleep.' },
+    lateVigorousExercise: { icon: 'run', title: 'Earlier hard workouts', short: 'Finish at least 1 h before bed.', grade: 'A', refs: ['stutz2019'], text: 'Finish vigorous workouts at least 1 h before bedtime.' },
+    lowMorningLight: { icon: 'sun', title: 'More morning light', short: 'Go outside for 30 min after waking.', grade: 'B', refs: ['khalsa2003', 'brown2022'], text: 'Get ≥ 30 min of outdoor light soon after waking to anchor your clock.' },
+    lateScreens: { icon: 'phone', title: 'Screens off earlier', short: 'Bright light at night delays sleep.', grade: 'B', refs: ['gooley2011', 'brown2022'], text: 'Dim screens and room lights in the last hour (ideally the last 3 h) before bed.' },
+    lateMeal: { icon: 'meal', title: 'Earlier dinner', short: 'Finish big meals 3 h before bed.', grade: 'C', refs: ['crispim2011'], text: 'Try finishing larger meals at least 3 h before bed.' },
+    longOrLateNap: { icon: 'nap', title: 'Shorter naps', short: '20–30 min, early afternoon.', grade: 'B', refs: ['milner2009'], text: 'Keep naps ≤ 20–30 min and in the early afternoon.' },
   };
   for (const [key, adv] of Object.entries(habitAdvice)) {
     const f = habits.freq[key] ?? 0;
     if (habits.n >= 3 && f >= 0.3) {
       recs.push({
         priority: 2,
-        title: `${HABIT_LABELS[key]} on ${Math.round(f * 100)} % of nights`,
-        detail: adv.text,
+        icon: adv.icon,
+        title: adv.title,
+        short: `${adv.short} (${Math.round(f * 100)}% of your nights)`,
+        detail: `${HABIT_LABELS[key]} on ${Math.round(f * 100)} % of nights. ${adv.text}`,
         grade: adv.grade,
         refs: adv.refs,
       });
@@ -304,7 +341,9 @@ function napWindow(wake, bed) {
   if (signedDiff(start, end) < 30) return null;
   return {
     time: start,
-    title: 'Nap window, only if needed',
+    icon: 'nap',
+    title: 'Nap, if needed',
+    short: `20–30 min max, done by ${fmtShort(end)}.`,
     detail: `If you need a nap, keep it to 20–30 min and finish by ${fmtShort(end)} so it doesn't take away sleep pressure you need at night.`,
     grade: 'B',
     refs: ['milner2009'],

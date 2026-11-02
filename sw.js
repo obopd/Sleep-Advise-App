@@ -1,9 +1,12 @@
 // Offline support: network-first (so updates arrive immediately), falling back to the
 // cached copy when offline. Only same-origin GET requests are handled.
-const CACHE = 'sleep-advisor-v3';
+const CACHE = 'sleep-advisor-v5';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg',
+  'fonts/fraunces-latin-wght-normal.woff2',
   'src/ui/app.js', 'src/ui/chart.js', 'src/ui/storage.js', 'src/ui/sample.js', 'src/ui/styles.css',
+  'src/ui/dom.js', 'src/ui/dialogs.js', 'src/ui/store.js', 'src/ui/theme.js', 'src/ui/why.js', 'src/ui/logsheet.js',
+  'src/ui/tonight.js', 'src/ui/week.js', 'src/ui/settings.js', 'src/ui/onboarding.js',
   'src/engine/index.js', 'src/engine/time.js', 'src/engine/sleepMetrics.js', 'src/engine/chronotype.js',
   'src/engine/circadian.js', 'src/engine/sleepNeed.js', 'src/engine/habits.js', 'src/engine/safety.js',
   'src/engine/recommend.js', 'src/engine/references.js', 'src/engine/forger99.js', 'src/engine/lightModel.js',

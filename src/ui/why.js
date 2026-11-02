@@ -1,7 +1,7 @@
 // "Why?" sheets: the plain one-liner on screen, the evidence one tap away.
 import { h, localizeTimes } from './dom.js';
 import { openSheet } from './dialogs.js';
-import { REFERENCES } from '../engine/references.js';
+import { REFERENCES } from '../core/references.js';
 
 const GRADE_TEXT = {
   A: 'Strong evidence',

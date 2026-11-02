@@ -52,7 +52,7 @@ export const TABLES = {
       ...common,
       { name: 'start_time', type: 'timestamptz', required: true, description: 'Start of the period.' },
       { name: 'end_time', type: 'timestamptz', required: true, description: 'End of the period.' },
-      { name: 'measurement_type', type: 'enum', values: ['self_report', 'sensor'], required: true, description: 'Self-reported context or sensor measurement.' },
+      { name: 'measurement_type', type: 'enum', values: ['self_report', 'sensor', 'device_daylight'], required: true, description: 'Self-reported; sensor lux measurement; or device daylight classification without lux (e.g. Apple Watch "Time in Daylight").' },
       { name: 'illuminance_lux', type: 'numeric', unit: 'lux', min: 0, max: 200000, description: 'Measured photopic illuminance (mean over the period). Only from a sensor.' },
       { name: 'spectral_measurement', type: 'jsonb', description: 'Spectral data if the sensor provides it. Never derived from lux.' },
       { name: 'melanopic_edi_lux', type: 'numeric', unit: 'lux (melanopic EDI)', min: 0, max: 200000, description: 'Melanopic equivalent daylight illuminance if measured. Never derived from lux.' },

@@ -63,7 +63,7 @@ create table if not exists public.light_exposure_events (
   user_id                   uuid not null references auth.users (id) on delete cascade default auth.uid(),
   start_time                timestamptz not null,
   end_time                  timestamptz not null,
-  measurement_type          text not null check (measurement_type in ('self_report','sensor')),
+  measurement_type          text not null check (measurement_type in ('self_report','sensor','device_daylight')),
   illuminance_lux           numeric check (illuminance_lux between 0 and 200000),
   spectral_measurement      jsonb,
   melanopic_edi_lux         numeric check (melanopic_edi_lux between 0 and 200000),
@@ -79,7 +79,8 @@ create table if not exists public.light_exposure_events (
   revisions                 jsonb,
   constraint light_end_after_start check (end_time >= start_time),
   -- lux, melanopic and spectral values only from sensors; never derived from self-report
-  constraint light_values_only_from_sensor check (measurement_type = 'sensor' or (illuminance_lux is null and melanopic_edi_lux is null and spectral_measurement is null))
+  constraint light_values_only_from_sensor check (measurement_type = 'sensor' or (illuminance_lux is null and melanopic_edi_lux is null and spectral_measurement is null)),
+  constraint light_sensor_has_lux check (measurement_type <> 'sensor' or illuminance_lux is not null)
 );
 create index if not exists light_user_start on public.light_exposure_events (user_id, start_time);
 

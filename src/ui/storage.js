@@ -1,19 +1,31 @@
-// Local-only persistence. Sleep and health data never leave the device unless the user
-// exports it themselves.
+// Device storage (localStorage). Local-first: everything works without an account.
+// v1 ('sleep-advisor:v1', one row per night) is migrated once to v2 events; the v1 copy is
+// left untouched as a backup.
+import { emptyState, migrateV1, SCHEMA_VERSION } from '../core/repo.js';
+import { deviceTimeZone } from '../core/time.js';
 
-const KEY = 'sleep-advisor:v1';
+export const KEY = 'sleep-advisor:v2';
+const V1 = 'sleep-advisor:v1';
 
-const EMPTY = () => ({ profile: {}, entries: [], measured: [], lightLog: {}, settings: { theme: 'auto' } });
+function read(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return EMPTY();
-    const data = JSON.parse(raw);
-    return { ...EMPTY(), ...data };
-  } catch {
-    return EMPTY();
+  const v2 = read(KEY);
+  if (v2?.schema_version === SCHEMA_VERSION) return v2;
+  const v1 = read(V1);
+  if (v1 && (v1.entries?.length || v1.profile?.onboarded)) {
+    const migrated = migrateV1(v1, { tz: deviceTimeZone() });
+    save(migrated);
+    return migrated;
   }
+  return emptyState(Date.now(), deviceTimeZone());
 }
 
 export function save(state) {
@@ -25,25 +37,11 @@ export function save(state) {
   }
 }
 
-export const emptyState = EMPTY;
-
-export function upsertEntry(state, entry) {
-  const entries = state.entries.filter((e) => e.date !== entry.date);
-  entries.push(entry);
-  entries.sort((a, b) => a.date.localeCompare(b.date));
-  return { ...state, entries };
-}
-
-export function removeEntry(state, date) {
-  return { ...state, entries: state.entries.filter((e) => e.date !== date) };
-}
-
-export function exportJson(state) {
-  return JSON.stringify({ app: 'sleep-advisor', version: 1, exportedAt: new Date().toISOString(), ...state }, null, 2);
-}
-
-export function importJson(text) {
-  const data = JSON.parse(text);
-  if (!data || !Array.isArray(data.entries)) throw new Error('Not a Sleep Advisor export file');
-  return { profile: data.profile || {}, entries: data.entries, measured: data.measured || [], lightLog: data.lightLog || {}, settings: data.settings || { theme: 'auto' } };
+/** Remove every local copy (v2 and the v1 backup). */
+export function wipe() {
+  try {
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(V1);
+    localStorage.removeItem('sleep-advisor:session');
+  } catch { /* storage blocked */ }
 }

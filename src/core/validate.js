@@ -117,10 +117,10 @@ const SPECIFIC = {
   },
   light_exposure_events(r) {
     const out = endAfterStart(r, 24 * HOUR_MS, '24 h');
-    if (r.measurement_type === 'self_report' && r.illuminance_lux != null && r.illuminance_lux !== '') {
+    if (r.measurement_type !== 'sensor' && r.illuminance_lux != null && r.illuminance_lux !== '') {
       out.push(issue('error', 'lux_without_sensor', 'Lux values can only come from a sensor measurement.', { field: 'illuminance_lux' }));
     }
-    if (r.measurement_type === 'self_report' && (r.melanopic_edi_lux != null || r.spectral_measurement != null)) {
+    if (r.measurement_type !== 'sensor' && (r.melanopic_edi_lux != null || r.spectral_measurement != null)) {
       out.push(issue('error', 'spectral_without_sensor', 'Melanopic or spectral values can only come from a sensor.', { field: 'melanopic_edi_lux' }));
     }
     if (r.measurement_type === 'sensor' && (r.illuminance_lux == null || r.illuminance_lux === '')) {

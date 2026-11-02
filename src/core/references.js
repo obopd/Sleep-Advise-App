@@ -18,6 +18,7 @@ export const REFERENCES = {
   shekleton2013: 'Shekleton JA, Rajaratnam SMW, Gooley JJ, Van Reen E, Czeisler CA, Lockley SW. Improved neurobehavioral performance during the wake maintenance zone. J Clin Sleep Med. 2013;9(4):353-62.',
   forger1999: 'Forger DB, Jewett ME, Kronauer RE. A simpler model of the human circadian pacemaker. J Biol Rhythms. 1999;14(6):532-7.',
   cheng2021: 'Cheng P, Walch O, Huang Y, et al. Predicting circadian phase across populations: a comparison of mathematical models and wearable devices. Sleep. 2021;44(10):zsab126.',
+  akerstedt1990: 'Åkerstedt T, Gillberg M. Subjective and objective sleepiness in the active individual. Int J Neurosci. 1990;52(1-2):29-37.',
   khalsa2003: 'Khalsa SB, Jewett ME, Cajochen C, Czeisler CA. A phase response curve to single bright light pulses in human subjects. J Physiol. 2003;549(Pt 3):945-52.',
   gooley2011: 'Gooley JJ, Chamberlain K, Smith KA, et al. Exposure to room light before bedtime suppresses melatonin onset and shortens melatonin duration in humans. J Clin Endocrinol Metab. 2011;96(3):E463-72.',
   brown2022: 'Brown TM, Brainard GC, Cajochen C, et al. Recommendations for daytime, evening, and nighttime indoor light exposure to best support physiology, sleep, and wakefulness in healthy adults. PLoS Biol. 2022;20(3):e3001571.',

@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Sleep" />
     <title>Sleep Advisor</title>
-    <meta name="description" content="Your sleep schedule, built on your body clock and sleep research." />
+    <meta name="description" content="A research-oriented sleep diary and advisor: records sleep, light and daily behaviour, and separates measurements from model estimates." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
@@ -17,14 +17,18 @@
     <link rel="stylesheet" href="src/ui/styles.css" />
   </head>
   <body>
-    <main class="view" id="view-tonight" hidden></main>
-    <main class="view" id="view-week" hidden></main>
-    <main class="view" id="view-settings" hidden></main>
+    <main class="view" id="view-today" hidden></main>
+    <main class="view" id="view-log" hidden></main>
+    <main class="view" id="view-insights" hidden></main>
+    <main class="view" id="view-plan" hidden></main>
+    <main class="view" id="view-more" hidden></main>
     <div class="onboard" id="onboard" hidden></div>
     <nav class="dock" id="dock" role="tablist" aria-label="Sections" hidden>
-      <button class="tab" role="tab" data-view="tonight" aria-label="Tonight"></button>
-      <button class="tab" role="tab" data-view="week" aria-label="Week"></button>
-      <button class="tab" role="tab" data-view="settings" aria-label="Settings"></button>
+      <button class="tab" role="tab" data-view="today" aria-label="Today"></button>
+      <button class="tab" role="tab" data-view="log" aria-label="Log"></button>
+      <button class="tab" role="tab" data-view="insights" aria-label="Insights"></button>
+      <button class="tab" role="tab" data-view="plan" aria-label="Plan"></button>
+      <button class="tab" role="tab" data-view="more" aria-label="More"></button>
     </nav>
     <script type="module" src="src/ui/app.js"></script>
   </body>

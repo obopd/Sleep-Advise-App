@@ -1,7 +1,7 @@
 {
   "name": "sleep-advise-app",
-  "version": "0.1.0",
-  "description": "Research-based sleep advisor: estimates your circadian hormone rhythm from a sleep diary and builds a personal sleep schedule and habit plan.",
+  "version": "0.2.0",
+  "description": "Research-oriented sleep advisor: longitudinal sleep and behaviour records, transparent analytics, sleep-pressure and experimental circadian models, research exports.",
   "type": "module",
   "private": true,
   "scripts": {

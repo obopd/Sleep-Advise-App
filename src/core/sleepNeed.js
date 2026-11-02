@@ -14,7 +14,7 @@ export function ageFromBirthday(birthday, today = new Date()) {
 
 /** Age from the profile: birthday when given, else an older saved age. */
 export function profileAge(profile, today = new Date()) {
-  return ageFromBirthday(profile?.birthday, today) ?? (Number(profile?.age) || null);
+  return ageFromBirthday(profile?.birthday, today) ?? (Number(profile?.age_years_reported ?? profile?.age) || null);
 }
 
 export function sleepNeedForAge(age) {
@@ -35,7 +35,7 @@ export function sleepNeedForAge(age) {
  */
 export function resolveSleepNeed(profile) {
   const base = sleepNeedForAge(profileAge(profile));
-  const personal = Number(profile?.personalNeedHours);
+  const personal = Number(profile?.preferred_sleep_hours ?? profile?.personalNeedHours);
   if (Number.isFinite(personal) && personal > 0) {
     const clamped = Math.min(base.max, Math.max(base.min, personal));
     return { ...base, target: clamped, personal: true, clamped: clamped !== personal };

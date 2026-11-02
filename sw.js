@@ -1,6 +1,6 @@
 // Offline support: network-first (so updates arrive immediately), falling back to the
 // cached copy when offline. Only same-origin GET requests are handled.
-const CACHE = 'sleep-advisor-v10';
+const CACHE = 'sleep-advisor-v11';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'fonts/fraunces-latin-wght-normal.woff2',
   'src/ui/app.js', 'src/ui/config.js', 'src/ui/dialogs.js', 'src/ui/dom.js', 'src/ui/forms.js', 'src/ui/kit.js', 'src/ui/nav.js',

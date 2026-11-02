@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sleep Advisor</title>
+    <meta name="description" content="Research-based sleep advisor: estimates your circadian hormone rhythm from a sleep diary and builds your personal sleep schedule." />
+    <link rel="stylesheet" href="src/ui/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
+        <span>Sleep Advisor</span>
+      </div>
+      <nav role="tablist" aria-label="Sections">
+        <button role="tab" data-view="today" aria-selected="true">Today</button>
+        <button role="tab" data-view="log">Sleep log</button>
+        <button role="tab" data-view="plan">My plan</button>
+        <button role="tab" data-view="profile">Profile</button>
+        <button role="tab" data-view="science">Science</button>
+      </nav>
+    </header>
+    <main id="view" tabindex="-1"></main>
+    <footer class="foot">
+      Educational wellness tool, not a medical device. Hormone curves are model estimates from your sleep timing, not measurements.
+      All data stays in this browser.
+    </footer>
+    <script type="module" src="src/ui/app.js"></script>
+  </body>
+</html>

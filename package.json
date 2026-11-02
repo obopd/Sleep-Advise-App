@@ -1,0 +1,15 @@
+{
+  "name": "sleep-advise-app",
+  "version": "0.1.0",
+  "description": "Research-based sleep advisor: estimates your circadian hormone rhythm from a sleep diary and builds a personal sleep schedule and habit plan.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
